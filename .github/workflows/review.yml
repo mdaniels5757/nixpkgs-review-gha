@@ -154,14 +154,18 @@ jobs:
 
       - name: generate report
         id: report
+        env:
+          OS: ${{ runner.os }}
         run: |
           if [[ -s fetch_cmd ]]; then
             cat fetch_cmd
             echo fetch_cmd_${{ matrix.system }}=$(base64 -w0 fetch_cmd) >> "$GITHUB_OUTPUT"
           fi
           dir=~/.cache/nixpkgs-review/pr-${PR_NUMBER}
-          sandbox=$(nix config show sandbox)
-          sed -i '/^###/s/$/ (sandbox = '"$sandbox"')/' $dir/report.md
+          if [ "$OS" != "Linux" ]; then
+            sandbox=$(nix config show sandbox)
+            sed -i '/^###/s/$/ (sandbox = '"$sandbox"')/' "$dir/report.md"
+          fi
           cat $dir/report.md
           report=$(jq -c '.+{$md}' $dir/report.json --rawfile md $dir/report.md | base64 -w0)
           echo report_${{ matrix.system }}=$report >> "$GITHUB_OUTPUT"
