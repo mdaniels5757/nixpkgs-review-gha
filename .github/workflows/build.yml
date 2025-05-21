@@ -73,7 +73,7 @@ jobs:
         if: ${{ matrix.system == 'x86_64-linux' || matrix.system == 'aarch64-linux' }}
 
       - name: install nix
-        uses: DeterminateSystems/nix-installer-action@v16
+        uses: DeterminateSystems/nix-installer-action@v17
         with:
           extra-conf: |
             sandbox = ${{
