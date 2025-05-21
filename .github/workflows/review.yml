@@ -119,9 +119,6 @@ jobs:
         with:
           name: ${{ vars.CACHIX_CACHE }}
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-      - name: watch store in background
-        run: |
-          cachix watch-store ${{ vars.CACHIX_CACHE }} &
       - name: install packages
         run: |
           pkgs=(coreutils nixpkgs-review jq gnused)
