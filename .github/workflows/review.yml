@@ -1,20 +1,14 @@
 name: review
-run-name: "review ${{ inputs.repo }}#${{ inputs.pr }}"
+run-name: "review #${{ inputs.pr }}"
 
 permissions: {}
 
 env:
   PR_NUMBER: ${{ inputs.pr }}
-  REPO: ${{ inputs.repo }}
 
 on:
   workflow_dispatch:
     inputs:
-      repo:
-        description: "Repository"
-        required: true
-        type: string
-        default: "NixOS/nixpkgs"
       pr:
         description: "Pull Request Number"
         required: true
@@ -138,7 +132,7 @@ jobs:
       - name: clone nixpkgs
         uses: actions/checkout@v4
         with:
-          repository: ${{ inputs.repo }}
+          repository: NixOS/nixpkgs
           persist-credentials: false
 
       - name: wait for upstream eval
@@ -149,7 +143,7 @@ jobs:
           start=$(date +%s)
           timeout=900
           while [[ $(( $(date +%s) - $start )) -lt $timeout ]]; do
-            status=$(gh pr -R ${REPO} checks ${PR_NUMBER} --json 'state,name,workflow' -q '.[]|select(.name=="Process" and (.workflow=="Eval" or .workflow==".github/workflows/eval.yml"))|.state')
+            status=$(gh pr -R nixos/nixpkgs checks ${PR_NUMBER} --json 'state,name,workflow' -q '.[]|select(.name=="Process" and (.workflow=="Eval" or .workflow==".github/workflows/eval.yml"))|.state')
             if [[ -z "$status" ]]; then echo "Failed to find eval check"
             else echo "Eval status: ${status}"; fi
             if [[ "$status" = "SUCCESS" ]]; then break; fi
@@ -286,7 +280,7 @@ jobs:
           cat report.md
           echo report=$(base64 -w0 report.md) >> "$GITHUB_OUTPUT"
           echo success=$(jq -s 'all(.[].result[]; .failed==[])' reports/*.json) >> "$GITHUB_OUTPUT"
-          sed '1s|$| for [#'"$PR_NUMBER"'](https://github.com/'"$REPO"'/pull/'"$PR_NUMBER"')|' report.md >> $GITHUB_STEP_SUMMARY
+          sed '1s|$| for [#'"$PR_NUMBER"'](https://github.com/NixOS/nixpkgs/pull/'"$PR_NUMBER"')|' report.md >> $GITHUB_STEP_SUMMARY
         env:
           FETCH_CMD_X86_64_LINUX: ${{ needs.review.outputs.fetch_cmd_x86_64-linux }}
           FETCH_CMD_AARCH64_LINUX: ${{ needs.review.outputs.fetch_cmd_aarch64-linux }}
@@ -313,7 +307,7 @@ jobs:
         if: ${{ inputs.post-result }}
         run: |
           if [[ -n "$GH_TOKEN" ]]; then
-            gh pr -R ${REPO} comment ${PR_NUMBER} -F report.md
+            gh pr -R NixOS/nixpkgs comment ${PR_NUMBER} -F report.md
           fi
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -322,7 +316,7 @@ jobs:
         if: ${{ inputs.approve-on-success && needs.report.outputs.success == 'true' }}
         run: |
           if [[ -n "$GH_TOKEN" ]]; then
-            gh pr -R ${REPO} review ${PR_NUMBER} --approve -b "Approved automatically following the successful run of \`nixpkgs-review\`." || true
+            gh pr -R NixOS/nixpkgs review ${PR_NUMBER} --approve -b "Approved automatically following the successful run of \`nixpkgs-review\`." || true
           fi
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
