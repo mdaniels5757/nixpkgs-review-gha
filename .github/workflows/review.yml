@@ -135,21 +135,6 @@ jobs:
           repository: NixOS/nixpkgs
           persist-credentials: false
 
-      - name: wait for upstream eval
-        if: ${{ !inputs.local-eval }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          start=$(date +%s)
-          timeout=900
-          while [[ $(( $(date +%s) - $start )) -lt $timeout ]]; do
-            status=$(gh pr -R nixos/nixpkgs checks ${PR_NUMBER} --json 'state,name,workflow' -q '.[]|select(.name=="Process" and (.workflow=="Eval" or .workflow==".github/workflows/eval.yml"))|.state')
-            if [[ -z "$status" ]]; then echo "Failed to find eval check"
-            else echo "Eval status: ${status}"; fi
-            if [[ "$status" = "SUCCESS" ]]; then break; fi
-            sleep 10
-          done
-
       - name: run nixpkgs-review
         run: |
           nixpkgs-review -- \
