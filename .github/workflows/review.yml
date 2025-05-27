@@ -43,11 +43,6 @@ on:
           - yes_sandbox_false
           - yes_sandbox_relaxed
           - yes_sandbox_true
-      local-eval:
-        description: "Force local eval"
-        required: true
-        type: boolean
-        default: false
       push-to-cache:
         description: "Push to cache"
         required: true
@@ -139,7 +134,6 @@ jobs:
         run: |
           nixpkgs-review -- \
             pr ${PR_NUMBER} \
-            --eval ${{ inputs.local-eval && 'local' || 'auto' }} \
             --no-shell \
             --no-headers \
             --print-result \
