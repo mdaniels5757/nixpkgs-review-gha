@@ -1,5 +1,5 @@
 name: review
-run-name: "review #${{ inputs.pr }}"
+run-name: "review #${{ inputs.pr }}${{ inputs.extra-args && format(' ({0})', inputs.extra-args) || '' }}"
 
 permissions: {}
 
@@ -43,6 +43,10 @@ on:
           - yes_sandbox_false
           - yes_sandbox_relaxed
           - yes_sandbox_true
+      extra-args:
+        description: "nixpkgs-review extra args"
+        required: false
+        type: string
       push-to-cache:
         description: "Push to cache"
         required: true
@@ -130,7 +134,7 @@ jobs:
           repository: NixOS/nixpkgs
           persist-credentials: false
 
-      - name: run nixpkgs-review
+      - name: run nixpkgs-review ${{ inputs.extra-args }}
         run: |
           nixpkgs-review -- \
             pr ${PR_NUMBER} \
@@ -138,9 +142,11 @@ jobs:
             --no-headers \
             --print-result \
             --build-args="-L" \
+            $EXTRA_ARGS \
             || true
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          EXTRA_ARGS: ${{ inputs.extra-args }}
 
       - name: push results to cache
         if: ${{ inputs.push-to-cache && ((vars.ATTIC_SERVER != '' && vars.ATTIC_CACHE != '') || vars.CACHIX_CACHE != '') }}
