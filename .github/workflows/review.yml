@@ -1,5 +1,5 @@
 name: review
-run-name: "review #${{ inputs.pr }}"
+run-name: "review #${{ inputs.pr }}${{ inputs.extra-args && format(' ({0})', inputs.extra-args) || '' }}"
 
 permissions: {}
 
@@ -43,11 +43,10 @@ on:
           - yes_sandbox_false
           - yes_sandbox_relaxed
           - yes_sandbox_true
-      local-eval:
-        description: "Force local eval"
-        required: true
-        type: boolean
-        default: false
+      extra-args:
+        description: "nixpkgs-review extra args"
+        required: false
+        type: string
       push-to-cache:
         description: "Push to cache"
         required: true
@@ -135,33 +134,19 @@ jobs:
           repository: NixOS/nixpkgs
           persist-credentials: false
 
-      - name: wait for upstream eval
-        if: ${{ !inputs.local-eval }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          start=$(date +%s)
-          timeout=900
-          while [[ $(( $(date +%s) - $start )) -lt $timeout ]]; do
-            status=$(gh pr -R nixos/nixpkgs checks ${PR_NUMBER} --json 'state,name,workflow' -q '.[]|select(.name=="Process" and (.workflow=="Eval" or .workflow==".github/workflows/eval.yml"))|.state')
-            if [[ -z "$status" ]]; then echo "Failed to find eval check"
-            else echo "Eval status: ${status}"; fi
-            if [[ "$status" = "SUCCESS" ]]; then break; fi
-            sleep 10
-          done
-
-      - name: run nixpkgs-review
+      - name: run nixpkgs-review ${{ inputs.extra-args }}
         run: |
           nixpkgs-review -- \
             pr ${PR_NUMBER} \
-            --eval ${{ inputs.local-eval && 'local' || 'auto' }} \
             --no-shell \
             --no-headers \
             --print-result \
             --build-args="-L" \
+            $EXTRA_ARGS \
             || true
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          EXTRA_ARGS: ${{ inputs.extra-args }}
 
       - name: push results to cache
         if: ${{ inputs.push-to-cache && ((vars.ATTIC_SERVER != '' && vars.ATTIC_CACHE != '') || vars.CACHIX_CACHE != '') }}
