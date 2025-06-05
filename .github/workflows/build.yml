@@ -90,7 +90,10 @@ jobs:
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
       - name: build/install packages
-        run: nix profile install ${{ inputs.packages }}
+        run: |
+          pkgs=(${{ inputs.packages }})
+          for pkg in ${pkgs[@]}; do args+=("github:nixos/nixpkgs/nixos-unstable#$pkg"); done
+          nix profile install ${args[@]}
         if: ${{ inputs.packages != '' }}
 
       - name: start upterm session
