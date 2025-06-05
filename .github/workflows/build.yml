@@ -89,8 +89,8 @@ jobs:
           name: ${{ vars.CACHIX_CACHE }}
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
-      - name: nix build
-        run: nix build --keep-going -L ${{ inputs.packages }}
+      - name: build/install packages
+        run: nix profile install ${{ inputs.packages }}
         if: ${{ inputs.packages != '' }}
 
       - name: start upterm session
