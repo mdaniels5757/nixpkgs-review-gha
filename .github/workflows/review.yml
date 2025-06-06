@@ -229,7 +229,7 @@ jobs:
         run: |
           echo -e "## \`nixpkgs-review\` result\n" >> report.md
           echo -e "Generated using [\`nixpkgs-review-gha\`](https://github.com/Defelo/nixpkgs-review-gha)\n" >> report.md
-          echo -e "Command: \`nixpkgs-review pr ${PR_NUMBER}\`\n" >> report.md
+          echo -e "Command: \`nixpkgs-review pr ${PR_NUMBER} ${EXTRA_ARGS}\`\n" >> report.md
           echo -e "Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n" >> report.md
 
           mkdir .tmp
@@ -275,6 +275,7 @@ jobs:
           REPORT_AARCH64_LINUX: ${{ needs.review.outputs.report_aarch64-linux }}
           REPORT_X86_64_DARWIN: ${{ needs.review.outputs.report_x86_64-darwin }}
           REPORT_AARCH64_DARWIN: ${{ needs.review.outputs.report_aarch64-darwin }}
+          EXTRA_ARGS: ${{ inputs.extra-args && format(' {0}', inputs.extra-args) || '' }}
 
   post-result:
     runs-on: ubuntu-latest
