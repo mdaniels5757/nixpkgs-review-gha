@@ -43,6 +43,10 @@ on:
           - yes_sandbox_false
           - yes_sandbox_relaxed
           - yes_sandbox_true
+      build-args:
+        description: "args to nix-build"
+        required: true
+        default: "-L"
       extra-args:
         description: "nixpkgs-review extra args"
         required: false
@@ -129,17 +133,18 @@ jobs:
 
       - name: run nixpkgs-review ${{ inputs.extra-args }}
         run: |
-          nixpkgs-review -- \
-            pr ${PR_NUMBER} \
+          nixpkgs-review \
+            pr "${PR_NUMBER}" \
             --no-shell \
             --no-headers \
             --print-result \
-            --build-args="-L" \
+            --build-args="${BUILD_ARGS}" \
             $EXTRA_ARGS \
             || true
         env:
           GITHUB_TOKEN: ${{ github.token }}
           EXTRA_ARGS: ${{ inputs.extra-args }}
+          BUILD_ARGS: ${{ inputs.build-args }}
 
       - name: start upterm session
         if: ${{ inputs.upterm }}
