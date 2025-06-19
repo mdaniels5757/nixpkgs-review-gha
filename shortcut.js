@@ -5,6 +5,11 @@
 
 const repo = "Defelo/nixpkgs-review-gha";
 
+const prTrackers = [
+  { name: "nixpk.gs", toUrl: pr => `https://nixpk.gs/pr-tracker.html?pr=${pr}` },
+  { name: "ocfox.me", toUrl: pr => `https://nixpkgs-tracker.ocfox.me/?pr=${pr}` },
+];
+
 const sleep = duration => new Promise(resolve => setTimeout(resolve, duration));
 const query = async (doc, sel) => {
   await sleep(0);
@@ -44,14 +49,15 @@ const setupPrPage = async () => {
   }
 
   if (actions.querySelector(".goto-pr-tracker") === null) {
-    const btn = document.createElement("button");
-    btn.classList.add("Button", "Button--secondary", "Button--small", "goto-pr-tracker");
-    btn.innerText = "PR Tracker";
-    actions.prepend(btn);
-    btn.onclick = () => {
-      // window.open(`https://nixpk.gs/pr-tracker.html?pr=${pr}`);
-      window.open(`https://nixpkgs-tracker.ocfox.me/?pr=${pr}`);
-    };
+    for (const { name, toUrl } of prTrackers) {
+      const btn = document.createElement("button");
+      btn.classList.add("Button", "Button--secondary", "Button--small", "goto-pr-tracker");
+      btn.innerText = prTrackers.length === 1 ? "PR Tracker" : `PR Tracker (${name})`;
+      actions.prepend(btn);
+      btn.onclick = () => {
+        window.open(toUrl(pr));
+      };
+    }
   }
 }
 
