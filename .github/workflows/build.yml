@@ -1,5 +1,5 @@
 name: build
-run-name: "build ${{ inputs.packages }}"
+run-name: "build ${{ inputs.packages }} (${{ inputs.nixpkgs }})"
 
 permissions: {}
 
@@ -19,12 +19,12 @@ on:
         description: "Build on aarch64-linux"
         required: true
         type: boolean
-        default: true
+        default: false
       x86_64-darwin:
         description: "Build on x86_64-darwin"
         required: true
         type: choice
-        default: yes_sandbox_true
+        default: 'no'
         options:
           - 'no'
           - yes_sandbox_false
@@ -34,7 +34,7 @@ on:
         description: "Build on aarch64-darwin"
         required: true
         type: choice
-        default: yes_sandbox_true
+        default: 'no'
         options:
           - 'no'
           - yes_sandbox_false
@@ -45,6 +45,11 @@ on:
         required: true
         type: boolean
         default: false
+      nixpkgs:
+        description: "Nixpkgs version (e.g. github:NixOS/nixpkgs/nixos-unstable or github:NixOS/nixpkgs/master)"
+        required: true
+        type: string
+        default: github:NixOS/nixpkgs/master
 
 jobs:
   build:
@@ -93,9 +98,11 @@ jobs:
       - name: build/install packages
         run: |
           pkgs=(${{ inputs.packages }})
-          for pkg in ${pkgs[@]}; do args+=("github:nixos/nixpkgs/nixos-unstable#$pkg"); done
+          for pkg in ${pkgs[@]}; do args+=("${NIXPKGS_REF}#${pkg}"); done
           nix profile install ${args[@]}
         if: ${{ inputs.packages != '' }}
+        env:
+          NIXPKGS_REF: ${{ inputs.nixpkgs }}
 
       - name: start upterm session
         if: ${{ inputs.upterm }}
