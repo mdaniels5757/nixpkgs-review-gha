@@ -122,8 +122,10 @@ jobs:
         run: |
           pkgs=(coreutils nixpkgs-review jq gnused)
           args=()
-          for pkg in ${pkgs[@]}; do args+=("github:nixos/nixpkgs/nixos-unstable#$pkg"); done
+          for pkg in ${pkgs[@]}; do args+=("github:nixos/nixpkgs/$CHANNEL_TO_USE#$pkg"); done
           nix profile install ${args[@]}
+        env:
+          CHANNEL_TO_USE: ${{ (runner.os == 'Linux') && 'nixos-unstable' || 'nixpkgs-unstable'  }}
 
       - name: clone nixpkgs
         uses: actions/checkout@v4
