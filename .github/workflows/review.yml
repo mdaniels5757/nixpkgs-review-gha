@@ -122,7 +122,7 @@ jobs:
         run: |
           pkgs=(coreutils nixpkgs-review jq gnused)
           args=()
-          for pkg in ${pkgs[@]}; do args+=("github:nixos/nixpkgs/nixos-unstable#$pkg"); done
+          for pkg in ${pkgs[@]}; do args+=("github:nixos/nixpkgs/nixpkgs-unstable#$pkg"); done
           nix profile install ${args[@]}
 
       - name: clone nixpkgs
