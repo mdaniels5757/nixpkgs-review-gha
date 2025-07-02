@@ -1,9 +1,26 @@
 // ==UserScript==
 // @name        nixpkgs-review-gha
 // @match       https://github.com/*
+// @run-at      document-idle
 // ==/UserScript==
 
 const repo = "Defelo/nixpkgs-review-gha";
+
+const reviewDefaults = ({ title, commits, labels, author, authoredByMe, hasLinuxRebuilds, hasDarwinRebuilds }) => {
+  const darwinSandbox = "true";
+  
+  return {
+    "x86_64-linux": hasLinuxRebuilds,
+    "aarch64-linux": hasLinuxRebuilds,
+    "x86_64-darwin": hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
+    "aarch64-darwin": hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
+    // "extra-args": "",
+    // "push-to-cache": true,
+    // "upterm": false,
+    // "post-result": true,
+    // "approve-on-success": false,
+  };
+};
 
 const prTrackers = [
   { name: "nixpk.gs", toUrl: pr => `https://nixpk.gs/pr-tracker.html?pr=${pr}` },
@@ -20,19 +37,61 @@ const query = async (doc, sel) => {
   }
 };
 
+const getPrDetails = pr => {
+  const title = document.querySelector("bdi.js-issue-title.markdown-title").innerText;
+  const commits = [...document.querySelectorAll(".TimelineItem-body a.markdown-title[href*='/commits/']")]
+    .flatMap(({ title, href }) => {
+      const match = /\/NixOS\/nixpkgs\/pull\/(\d+)\/commits\/([0-9a-f]+)$/i.exec(href);
+      return (match === null || match[1] !== pr) ? [] : [{
+        commit_id: match[2],
+        subject: title.split("\n")[0],
+        description: title,
+      }];
+    });
+  const labels = [...document.querySelectorAll("div.js-issue-labels > a")].map(x => x.innerText);
+  const author = document.querySelector(".js-discussion > :first-child a.author").href.split("/").at(-1);
+  const self = document.querySelector("div.AppHeader-user button[data-login]").getAttribute("data-login");
+  const authoredByMe = author === self;
+  const hasLinuxRebuilds = !labels.some(l => /rebuild-linux: 0$/.test(l));
+  const hasDarwinRebuilds = !labels.some(l => /rebuild-darwin: 0$/.test(l));
+
+  return { title, commits, labels, author, authoredByMe, hasLinuxRebuilds, hasDarwinRebuilds };
+};
+
 const setupActionsPage = async () => {
-  const match = /^https:\/\/github.com\/([^/]+\/[^/]+)\/actions\/workflows\/review.yml#(\d+)$/.exec(location.href);
+  const match = /^https:\/\/github.com\/([^/]+\/[^/]+)\/actions\/workflows\/review.yml#dispatch:(.*)$/.exec(location.href);
   if (match === null || match[1] !== repo) return;
-  
-  const pr = match[2];
-  history.replaceState(null, '', location.href.replace(/#\d+$/, ""));
+
+  const inputs = new URLSearchParams(match[2]);
 
   (await query(document, "details > summary.btn")).click();
-  (await query(document, "input.form-control[name='inputs[pr]']")).value = pr;
+  await query(document, "details .workflow-dispatch");
+
+  const setInput = (name, value) => {
+    const selector = `details .workflow-dispatch [name='inputs[${name}]']`;
+    const input = document.querySelector(`${selector}:not([type=hidden])`);
+
+    if (!input) {
+      alert(`workflow_dispatch input '${name}' does not exist`);
+      return;
+    }
+
+    if (input.type === "checkbox") {
+      if (!["true", "false"].includes(value)) {
+        alert(`workflow_dispatch input '${name}' expects a boolean ('true' or 'false) but is set to '${value}'`);
+        return;
+      }
+      input.checked = value === "true";
+    } else {
+      input.value = value;
+    }
+  };
+
+  [...inputs].forEach(([name, value]) => setInput(name, value));
 };
 
 const setupPrPage = async () => {
-  const match = /^https:\/\/github.com\/NixOS\/nixpkgs\/pull\/(\d+)/i.exec(location.href);
+  const match = /^https:\/\/github.com\/NixOS\/nixpkgs\/pull\/(\d+)([?#].*)?$/i.exec(location.href);
   if (match === null) return;
   
   const pr = match[1];
@@ -44,8 +103,14 @@ const setupPrPage = async () => {
     btn.innerText = "Run nixpkgs-review";
     actions.prepend(btn);
     btn.onclick = () => {
-      window.open(`https://github.com/${repo}/actions/workflows/review.yml#${pr}`);
+      const params = new URLSearchParams({ ...reviewDefaults(getPrDetails(pr)), pr });
+      window.open(`https://github.com/${repo}/actions/workflows/review.yml#dispatch:${params}`);
     };
+  }
+
+  const { hasLinuxRebuilds, hasDarwinRebuilds } = getPrDetails(pr);
+  if (!hasLinuxRebuilds && !hasDarwinRebuilds) {
+    actions.querySelector(".run-nixpkgs-review").setAttribute("aria-disabled", true);
   }
 
   if (actions.querySelector(".goto-pr-tracker") === null) {
