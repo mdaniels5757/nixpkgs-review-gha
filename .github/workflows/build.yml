@@ -69,7 +69,7 @@ jobs:
     runs-on: >-
       ${{ (matrix.system == 'x86_64-linux' && 'ubuntu-latest')
       || (matrix.system == 'aarch64-linux' && 'ubuntu-24.04-arm')
-      || (matrix.system == 'x86_64-darwin' && 'macos-13')
+      || (matrix.system == 'x86_64-darwin' && 'macos-latest')
       || (matrix.system == 'aarch64-darwin' && 'macos-latest') }}
 
     steps:
@@ -81,6 +81,7 @@ jobs:
         uses: cachix/install-nix-action@v31
         with:
           extra_nix_config: |
+            system = ${{ matrix.system }}
             sandbox = ${{
               (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_false'
                 || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_false') && 'false'
