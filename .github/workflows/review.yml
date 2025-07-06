@@ -85,7 +85,7 @@ jobs:
     runs-on: >-
       ${{ (matrix.system == 'x86_64-linux' && 'ubuntu-latest')
       || (matrix.system == 'aarch64-linux' && 'ubuntu-24.04-arm')
-      || (matrix.system == 'x86_64-darwin' && 'macos-13')
+      || (matrix.system == 'x86_64-darwin' && 'macos-latest')
       || (matrix.system == 'aarch64-darwin' && 'macos-latest') }}
     outputs:
       report_x86_64-linux: ${{ steps.report.outputs.report_x86_64-linux }}
@@ -98,20 +98,20 @@ jobs:
       fetch_cmd_aarch64-darwin: ${{ steps.report.outputs.fetch_cmd_aarch64-darwin }}
 
     steps:
-      - name: prepare /nix
-        run: sudo mkdir /mnt/nix && sudo mount -m -o bind /mnt/nix /nix
-        if: ${{ matrix.system == 'x86_64-linux' || matrix.system == 'aarch64-linux' }}
-
-      - name: install nix
-        uses: cachix/install-nix-action@v31
+      - uses: actions/checkout@v4
         with:
-          extra_nix_config: |
-            sandbox = ${{
-              (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_false'
-                || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_false') && 'false'
-              || (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_relaxed'
-                || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_relaxed') && 'relaxed'
-              || 'true' }}
+          sparse-checkout: .github/actions
+
+      - name: setup nix
+        uses: ./.github/actions/setup-nix
+        with:
+          system: ${{ matrix.system }}
+          sandbox: ${{
+            (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_false'
+              || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_false') && 'false'
+            || (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_relaxed'
+              || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_relaxed') && 'relaxed'
+            || 'true' }}
       - name: setup Cachix
         uses: cachix/cachix-action@0fc020193b5a1fa3ac4575aa3a7d3aa6a35435ad
         with:
@@ -129,6 +129,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: NixOS/nixpkgs
+          path: nixpkgs
           persist-credentials: false
 
       - name: run nixpkgs-review ${{ inputs.extra-args }}
@@ -141,6 +142,7 @@ jobs:
             --build-args="${BUILD_ARGS}" \
             $EXTRA_ARGS \
             || true
+        working-directory: nixpkgs
         env:
           GITHUB_TOKEN: ${{ github.token }}
           EXTRA_ARGS: ${{ inputs.extra-args }}
@@ -154,14 +156,18 @@ jobs:
 
       - name: generate report
         id: report
+        env:
+          OS: ${{ runner.os }}
         run: |
           if [[ -s fetch_cmd ]]; then
             cat fetch_cmd
             echo fetch_cmd_${{ matrix.system }}=$(base64 -w0 fetch_cmd) >> "$GITHUB_OUTPUT"
           fi
           dir=~/.cache/nixpkgs-review/pr-${PR_NUMBER}
-          sandbox=$(nix config show sandbox)
-          sed -i '/^###/s/$/ (sandbox = '"$sandbox"')/' $dir/report.md
+          if [ "$OS" != "Linux" ]; then
+            sandbox=$(nix config show sandbox)
+            sed -i '/^###/s/$/ (sandbox = '"$sandbox"')/' "$dir/report.md"
+          fi
           cat $dir/report.md
           report=$(jq -c '.+{$md}' $dir/report.json --rawfile md $dir/report.md | base64 -w0)
           echo report_${{ matrix.system }}=$report >> "$GITHUB_OUTPUT"
