@@ -185,7 +185,7 @@ jobs:
         run: |
           echo -e "## \`nixpkgs-review\` result\n" >> report.md
           echo -e "Generated using [\`nixpkgs-review-gha\`](https://github.com/Defelo/nixpkgs-review-gha)\n" >> report.md
-          echo -e "Command: \`nixpkgs-review pr ${PR_NUMBER} ${EXTRA_ARGS}\`\n" >> report.md
+          echo -e "Command: \`nixpkgs-review pr ${PR_NUMBER}${EXTRA_ARGS:+ $EXTRA_ARGS}\`\n" >> report.md
           echo -e "Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n" >> report.md
 
           mkdir .tmp
@@ -223,6 +223,7 @@ jobs:
           echo success=$(jq -s 'all(.[].result[]; .failed==[])' reports/*.json) >> "$GITHUB_OUTPUT"
           sed '1s|$| for [#'"$PR_NUMBER"'](https://github.com/NixOS/nixpkgs/pull/'"$PR_NUMBER"')|' report.md >> $GITHUB_STEP_SUMMARY
         env:
+          EXTRA_ARGS: ${{ inputs.extra-args }}
           FETCH_CMD_X86_64_LINUX: ${{ needs.review.outputs.fetch_cmd_x86_64-linux }}
           FETCH_CMD_AARCH64_LINUX: ${{ needs.review.outputs.fetch_cmd_aarch64-linux }}
           FETCH_CMD_X86_64_DARWIN: ${{ needs.review.outputs.fetch_cmd_x86_64-darwin }}
