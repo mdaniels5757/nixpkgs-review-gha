@@ -54,8 +54,9 @@ const getPrDetails = pr => {
   const authoredByMe = author === self;
   const hasLinuxRebuilds = !labels.some(l => /rebuild-linux: 0$/.test(l));
   const hasDarwinRebuilds = !labels.some(l => /rebuild-darwin: 0$/.test(l));
+  const state = document.querySelector("span.State").innerText.trim().toUpperCase();
 
-  return { title, commits, labels, author, authoredByMe, hasLinuxRebuilds, hasDarwinRebuilds };
+  return { title, commits, labels, author, authoredByMe, hasLinuxRebuilds, hasDarwinRebuilds, state };
 };
 
 const setupActionsPage = async () => {
@@ -108,8 +109,8 @@ const setupPrPage = async () => {
     };
   }
 
-  const { hasLinuxRebuilds, hasDarwinRebuilds } = getPrDetails(pr);
-  if (!hasLinuxRebuilds && !hasDarwinRebuilds) {
+  const { hasLinuxRebuilds, hasDarwinRebuilds, state } = getPrDetails(pr);
+  if ((!hasLinuxRebuilds && !hasDarwinRebuilds) || state == "MERGED") {
     actions.querySelector(".run-nixpkgs-review").setAttribute("aria-disabled", true);
   }
 
