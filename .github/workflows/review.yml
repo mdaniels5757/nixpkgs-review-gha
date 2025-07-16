@@ -68,7 +68,36 @@ on:
         default: false
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      pr: ${{ steps.pr.outputs.pr }}
+      head: ${{ steps.pr.outputs.head }}
+      merge: ${{ steps.pr.outputs.merge }}
+
+    steps:
+      - name: get pr
+        id: pr
+        run: |
+          while true; do
+            pr="$(gh api "/repos/NixOS/nixpkgs/pulls/$PR_NUMBER")"
+            jq -e '.mergeable_state == "unknown" and (.merged | not)' <<< "$pr" > /dev/null || break
+            echo "mergeable state not known yet, retrying..."
+            sleep 2
+          done
+          jq <<< "$pr"
+          if [[ "$(jq '.merged or .mergeable' <<< "$pr")" != "true" ]]; then
+            echo "::error::PR is not mergeable"
+            exit 1
+          fi
+          echo "pr=$pr" >> "$GITHUB_OUTPUT"
+          echo "head=$(jq -r '.head.sha' <<< "$pr")" >> "$GITHUB_OUTPUT"
+          echo "merge=$(jq -r '.merge_commit_sha' <<< "$pr")" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   review:
+    needs: [prepare]
     strategy:
       fail-fast: false
       matrix:
@@ -100,7 +129,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          sparse-checkout: .github/actions
+          sparse-checkout: |
+            .github/actions
+            packages.nix
 
       - name: setup nix
         uses: ./.github/actions/setup-nix
@@ -123,7 +154,7 @@ jobs:
           pkgs=(coreutils nixpkgs-review jq gnused)
           args=()
           for pkg in ${pkgs[@]}; do args+=("github:nixos/nixpkgs/nixpkgs-unstable#$pkg"); done
-          nix profile install ${args[@]}
+          nix profile install -f packages.nix ${args[@]}
 
       - name: clone nixpkgs
         uses: actions/checkout@v4
@@ -140,12 +171,14 @@ jobs:
             --no-headers \
             --print-result \
             --build-args="${BUILD_ARGS}" \
+            --pr-json="$PR_JSON" \
             $EXTRA_ARGS \
             || true
         working-directory: nixpkgs
         env:
           GITHUB_TOKEN: ${{ github.token }}
           EXTRA_ARGS: ${{ inputs.extra-args }}
+          PR_JSON: ${{ needs.prepare.outputs.pr }}
           BUILD_ARGS: ${{ inputs.build-args }}
 
       - name: start upterm session
@@ -179,7 +212,7 @@ jobs:
 
   report:
     runs-on: ubuntu-latest
-    needs: [review]
+    needs: [prepare, review]
     outputs:
       report: ${{ steps.report.outputs.report }}
       success: ${{ steps.report.outputs.success }}
@@ -190,7 +223,9 @@ jobs:
         run: |
           echo -e "## \`nixpkgs-review\` result\n" >> report.md
           echo -e "Generated using [\`nixpkgs-review-gha\`](https://github.com/Defelo/nixpkgs-review-gha)\n" >> report.md
-          echo -e "Command: \`nixpkgs-review pr ${PR_NUMBER}${EXTRA_ARGS:+ $EXTRA_ARGS}\`\n" >> report.md
+          echo -e "Command: \`nixpkgs-review pr ${PR_NUMBER}${EXTRA_ARGS:+ $EXTRA_ARGS}\`" >> report.md
+          echo -e "Commit: [\`$HEAD\`](https://github.com/NixOS/nixpkgs/commit/$HEAD) ([subsequent changes](https://github.com/NixOS/nixpkgs/compare/$HEAD..pull/$PR_NUMBER/head))" >> report.md
+          echo -e "Merge: [\`$MERGE\`](https://github.com/NixOS/nixpkgs/commit/$MERGE)\n" >> report.md
           echo -e "Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n" >> report.md
 
           mkdir .tmp
@@ -228,6 +263,8 @@ jobs:
           echo success=$(jq -s 'all(.[].result[]; .failed==[])' reports/*.json) >> "$GITHUB_OUTPUT"
           sed '1s|$| for [#'"$PR_NUMBER"'](https://github.com/NixOS/nixpkgs/pull/'"$PR_NUMBER"')|' report.md >> $GITHUB_STEP_SUMMARY
         env:
+          HEAD: ${{ needs.prepare.outputs.head }}
+          MERGE: ${{ needs.prepare.outputs.merge }}
           EXTRA_ARGS: ${{ inputs.extra-args }}
           FETCH_CMD_X86_64_LINUX: ${{ needs.review.outputs.fetch_cmd_x86_64-linux }}
           FETCH_CMD_AARCH64_LINUX: ${{ needs.review.outputs.fetch_cmd_aarch64-linux }}
