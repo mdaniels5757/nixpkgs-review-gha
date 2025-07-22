@@ -10,6 +10,7 @@ const reviewDefaults = ({ title, commits, labels, author, authoredByMe, hasLinux
   const darwinSandbox = "true";
   
   return {
+    // "branch": "main",
     "x86_64-linux": hasLinuxRebuilds,
     "aarch64-linux": hasLinuxRebuilds,
     "x86_64-darwin": hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
@@ -68,6 +69,13 @@ const setupActionsPage = async () => {
   (await query(document, "details > summary.btn")).click();
   await query(document, "details .workflow-dispatch");
 
+  const setBranch = async branch => {
+    (await query(document, "details .workflow-dispatch")).classList.add("old-branch");
+    document.querySelector("details .workflow-dispatch .branch-selection > details > summary").click();
+    (await query(document, `ref-selector[type=branch] button[value="${branch}"]`)).click();
+    while ((await query(document, "details .workflow-dispatch")).classList.contains("old-branch")) await sleep(100);
+  };
+
   const setInput = (name, value) => {
     const selector = `details .workflow-dispatch [name='inputs[${name}]']`;
     const input = document.querySelector(`${selector}:not([type=hidden])`);
@@ -88,7 +96,12 @@ const setupActionsPage = async () => {
     }
   };
 
-  [...inputs].forEach(([name, value]) => setInput(name, value));
+  const branch = inputs.get("branch");
+  if (branch) await setBranch(branch);
+
+  [...inputs]
+    .filter(([name]) => name !== "branch")
+    .forEach(([name, value]) => setInput(name, value));
 };
 
 const setupPrPage = async () => {
