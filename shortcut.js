@@ -102,6 +102,8 @@ const setupActionsPage = async () => {
   [...inputs]
     .filter(([name]) => name !== "branch")
     .forEach(([name, value]) => setInput(name, value));
+
+  document.querySelector("details .workflow-dispatch button[type=submit]").focus();
 };
 
 const setupPrPage = async () => {
