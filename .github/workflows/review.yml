@@ -68,6 +68,7 @@ on:
         default: nothing
         options:
           - nothing
+          - mark_as_ready
           - approve
           - merge
 
@@ -309,6 +310,17 @@ jobs:
           if [[ -n "$GH_TOKEN" ]]; then
             gh pr -R NixOS/nixpkgs comment ${PR_NUMBER} -F report.md
           fi
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: mark pull request as ready for review
+        if: ${{ needs.report.outputs.success == 'true' && inputs.on-success == 'mark_as_ready' }}
+        run: |
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo "::error::Cannot mark the PR as ready for review because no GH_TOKEN has been configured."
+            exit 1
+          fi
+          gh pr -R NixOS/nixpkgs ready ${PR_NUMBER}
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
