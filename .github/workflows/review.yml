@@ -173,7 +173,7 @@ jobs:
             --pr-json="$PR_JSON" \
             $EXTRA_ARGS
           EOF
-          
+
           nixpkgs-review \
             pr "${PR_NUMBER}" \
             --no-shell \
@@ -274,7 +274,6 @@ jobs:
         env:
           HEAD: ${{ needs.prepare.outputs.head }}
           MERGE: ${{ needs.prepare.outputs.merge }}
-          EXTRA_ARGS: ${{ inputs.extra-args }}
           FETCH_CMD_X86_64_LINUX: ${{ needs.review.outputs.fetch_cmd_x86_64-linux }}
           FETCH_CMD_AARCH64_LINUX: ${{ needs.review.outputs.fetch_cmd_aarch64-linux }}
           FETCH_CMD_X86_64_DARWIN: ${{ needs.review.outputs.fetch_cmd_x86_64-darwin }}
