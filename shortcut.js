@@ -10,6 +10,7 @@ const reviewDefaults = ({ title, commits, labels, author, authoredByMe, hasLinux
   const darwinSandbox = "true";
   
   return {
+    // "branch": "main",
     "x86_64-linux": hasLinuxRebuilds,
     "aarch64-linux": hasLinuxRebuilds,
     "x86_64-darwin": hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
@@ -54,8 +55,9 @@ const getPrDetails = pr => {
   const authoredByMe = author === self;
   const hasLinuxRebuilds = !labels.some(l => /rebuild-linux: 0$/.test(l));
   const hasDarwinRebuilds = !labels.some(l => /rebuild-darwin: 0$/.test(l));
+  const state = document.querySelector("span.State").innerText.trim().toUpperCase();
 
-  return { title, commits, labels, author, authoredByMe, hasLinuxRebuilds, hasDarwinRebuilds };
+  return { title, commits, labels, author, authoredByMe, hasLinuxRebuilds, hasDarwinRebuilds, state };
 };
 
 const setupActionsPage = async () => {
@@ -66,6 +68,13 @@ const setupActionsPage = async () => {
 
   (await query(document, "details > summary.btn")).click();
   await query(document, "details .workflow-dispatch");
+
+  const setBranch = async branch => {
+    (await query(document, "details .workflow-dispatch")).classList.add("old-branch");
+    document.querySelector("details .workflow-dispatch .branch-selection > details > summary").click();
+    (await query(document, `ref-selector[type=branch] button[value="${branch}"]`)).click();
+    while ((await query(document, "details .workflow-dispatch")).classList.contains("old-branch")) await sleep(100);
+  };
 
   const setInput = (name, value) => {
     const selector = `details .workflow-dispatch [name='inputs[${name}]']`;
@@ -87,7 +96,14 @@ const setupActionsPage = async () => {
     }
   };
 
-  [...inputs].forEach(([name, value]) => setInput(name, value));
+  const branch = inputs.get("branch");
+  if (branch) await setBranch(branch);
+
+  [...inputs]
+    .filter(([name]) => name !== "branch")
+    .forEach(([name, value]) => setInput(name, value));
+
+  document.querySelector("details .workflow-dispatch button[type=submit]").focus();
 };
 
 const setupPrPage = async () => {
@@ -108,8 +124,8 @@ const setupPrPage = async () => {
     };
   }
 
-  const { hasLinuxRebuilds, hasDarwinRebuilds } = getPrDetails(pr);
-  if (!hasLinuxRebuilds && !hasDarwinRebuilds) {
+  const { hasLinuxRebuilds, hasDarwinRebuilds, state } = getPrDetails(pr);
+  if ((!hasLinuxRebuilds && !hasDarwinRebuilds) || state == "MERGED") {
     actions.querySelector(".run-nixpkgs-review").setAttribute("aria-disabled", true);
   }
 
