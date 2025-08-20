@@ -163,6 +163,17 @@ jobs:
 
       - name: run nixpkgs-review ${{ inputs.extra-args }}
         run: |
+          cat << EOF
+          Running: nixpkgs-review \
+            pr "${PR_NUMBER}" \
+            --no-shell \
+            --no-headers \
+            --print-result \
+            --build-args="${BUILD_ARGS}" \
+            --pr-json="$PR_JSON" \
+            $EXTRA_ARGS
+          EOF
+          
           nixpkgs-review \
             pr "${PR_NUMBER}" \
             --no-shell \
