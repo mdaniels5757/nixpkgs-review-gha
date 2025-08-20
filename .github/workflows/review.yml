@@ -127,7 +127,7 @@ jobs:
       fetch_cmd_aarch64-darwin: ${{ steps.report.outputs.fetch_cmd_aarch64-darwin }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           sparse-checkout: |
             .github/actions
@@ -155,7 +155,7 @@ jobs:
           nix profile install -f packages.nix ${pkgs[@]}
 
       - name: clone nixpkgs
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: NixOS/nixpkgs
           path: nixpkgs
