@@ -105,7 +105,7 @@ jobs:
         run: |
           pkgs=(${{ inputs.packages }})
           for pkg in ${pkgs[@]}; do args+=("${NIXPKGS_REF}#${pkg}"); done
-          nix profile install ${args[@]}
+          nix profile add -f packages.nix ${args[@]}
         if: ${{ inputs.packages != '' }}
         env:
           NIXPKGS_REF: ${{ inputs.nixpkgs }}

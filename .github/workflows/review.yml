@@ -154,7 +154,7 @@ jobs:
           pkgs=(coreutils nixpkgs-review jq gnused)
           args=()
           for pkg in ${pkgs[@]}; do args+=("github:nixos/nixpkgs/nixpkgs-unstable#$pkg"); done
-          nix profile install -f packages.nix ${args[@]}
+          nix profile add -f packages.nix ${args[@]}
 
       - name: clone nixpkgs
         uses: actions/checkout@v4
