@@ -140,7 +140,8 @@ jobs:
         with:
           sparse-checkout: |
             .github/actions
-            packages.nix
+            flake.lock
+            flake.nix
 
       - name: setup nix
         uses: ./.github/actions/setup-nix
@@ -166,7 +167,7 @@ jobs:
           pkgs=(coreutils nixpkgs-review jq gnused)
           args=()
           for pkg in ${pkgs[@]}; do args+=("github:nixos/nixpkgs/nixpkgs-unstable#$pkg"); done
-          nix profile add -f packages.nix ${args[@]}
+          nix profile add "${args[@]/#/.#}"
 
       - name: clone nixpkgs
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
