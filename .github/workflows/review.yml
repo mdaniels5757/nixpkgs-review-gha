@@ -157,6 +157,7 @@ jobs:
           name: ${{ vars.CACHIX_CACHE }}
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
           extraPullNames: nix-community
+
       - name: install packages
         run: |
           pkgs=(coreutils nixpkgs-review jq gnused)

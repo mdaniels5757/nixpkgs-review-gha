@@ -96,20 +96,23 @@ jobs:
       fetch_cmd_aarch64-darwin: ${{ steps.report.outputs.fetch_cmd_aarch64-darwin }}
 
     steps:
-      - name: prepare /nix
-        run: sudo mkdir /mnt/nix && sudo mount -m -o bind /mnt/nix /nix
-        if: ${{ matrix.system == 'x86_64-linux' || matrix.system == 'aarch64-linux' }}
-
-      - name: install nix
-        uses: cachix/install-nix-action@56a7bb7b56d9a92d4fd1bc05758de7eea4a370a8
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
-          extra_nix_config: |
-            sandbox = ${{
-              (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_false'
-                || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_false') && 'false'
-              || (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_relaxed'
-                || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_relaxed') && 'relaxed'
-              || 'true' }}
+          sparse-checkout: |
+            .github/actions
+            packages.nix
+
+      - name: setup nix
+        uses: ./.github/actions/setup-nix
+        with:
+          system: ${{ matrix.system }}
+          sandbox: ${{
+            (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_false'
+              || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_false') && 'false'
+            || (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_relaxed'
+              || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_relaxed') && 'relaxed'
+            || 'true' }}
+
       - name: setup Cachix
         uses: cachix/cachix-action@0fc020193b5a1fa3ac4575aa3a7d3aa6a35435ad
         with:
@@ -120,15 +123,15 @@ jobs:
       - name: install packages
         run: |
           pkgs=(coreutils nixpkgs-review jq gnused)
-          args=()
-          for pkg in ${pkgs[@]}; do args+=("github:nixos/nixpkgs/nixos-unstable#$pkg"); done
-          nix profile install ${args[@]}
+          nix profile add -f packages.nix ${pkgs[@]}
 
-      - name: start checkout
+      - name: checkout nixpkgs default branch
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           repository: ${{ inputs.remote }}
+          path: nixpkgs
           persist-credentials: false
+
       - name: finish checkout
         run: |
           git fetch origin $BASE --depth 10
@@ -137,6 +140,7 @@ jobs:
           git checkout -b $REV origin/$REV || true
           git config --global user.email "null@example.com"
           git config --global user.name "GitHub Actions Bot"
+        working-directory: nixpkgs
 
       - name: run nixpkgs-review ${{ inputs.extra-args }}
         run: |
@@ -149,6 +153,7 @@ jobs:
             --build-args="-L" \
             $EXTRA_ARGS \
             || true
+        working-directory: nixpkgs
         env:
           GITHUB_TOKEN: ${{ github.token }}
           EXTRA_ARGS: ${{ inputs.extra-args }}
@@ -167,8 +172,15 @@ jobs:
             echo fetch_cmd_${{ matrix.system }}=$(base64 -w0 fetch_cmd) >> "$GITHUB_OUTPUT"
           fi
           dir=~/.cache/nixpkgs-review/rev-*
-          sandbox=$(nix config show sandbox)
-          sed -i '/^###/s/$/ (sandbox = '"$sandbox"')/' $dir/report.md
+          if [[ "$OS" != "Linux" ]]; then
+            sandbox=$(nix config show sandbox)
+            sed -i '/^###/s/$/ (sandbox = '"$sandbox"')/' "$dir/report.md"
+          fi
+          if ! [[ -s "$dir/report.md" ]]; then
+            echo -e "\n---" >> "$dir/report.md"
+            echo "### \`${{ matrix.system }}\`" >> "$dir/report.md"
+            echo ":white_check_mark: *No rebuilds*" >> "$dir/report.md"
+          fi
           cat $dir/report.md
           report=$(jq -c '.+{$md}' $dir/report.json --rawfile md $dir/report.md | base64 -w0)
           echo report_${{ matrix.system }}=$report >> "$GITHUB_OUTPUT"
