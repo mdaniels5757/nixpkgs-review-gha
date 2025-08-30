@@ -13,7 +13,7 @@ runs:
   steps:
     - name: reclaim space (linux)
       if: runner.os == 'Linux'
-      uses: wimpysworld/nothing-but-nix@main
+      uses: wimpysworld/nothing-but-nix@10c936d9e46521bf923f75458e0cbd4fa309300d
       with:
         hatchet-protocol: rampage
 
@@ -44,7 +44,7 @@ runs:
           /Users/runner/hostedtoolcache &
 
     - name: install nix
-      uses: cachix/install-nix-action@v31
+      uses: cachix/install-nix-action@56a7bb7b56d9a92d4fd1bc05758de7eea4a370a8
       with:
         # Putting build-dir in /nix is a workaround for https://github.com/wimpysworld/nothing-but-nix/issues/18
         extra_nix_config: |
@@ -58,7 +58,7 @@ runs:
 
     - name: post setup-nix
       if: runner.os == 'macOS'
-      uses: srz-zumix/post-run-action@v2
+      uses: srz-zumix/post-run-action@2bf288bc024acd0341914f792a811080ebd0f252
       with:
         shell: bash -e {0}
         post-run: |

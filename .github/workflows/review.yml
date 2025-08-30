@@ -134,7 +134,7 @@ jobs:
       fetch_cmd_aarch64-darwin: ${{ steps.report.outputs.fetch_cmd_aarch64-darwin }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           sparse-checkout: |
             .github/actions
@@ -150,6 +150,7 @@ jobs:
             || (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_relaxed'
               || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_relaxed') && 'relaxed'
             || 'true' }}
+
       - name: setup Cachix
         uses: cachix/cachix-action@0fc020193b5a1fa3ac4575aa3a7d3aa6a35435ad
         with:
@@ -162,7 +163,7 @@ jobs:
           nix profile add -f packages.nix ${pkgs[@]}
 
       - name: clone nixpkgs
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           repository: NixOS/nixpkgs
           path: nixpkgs
@@ -199,7 +200,7 @@ jobs:
 
       - name: start upterm session
         if: ${{ inputs.upterm }}
-        uses: owenthereal/action-upterm@v1
+        uses: owenthereal/action-upterm@77f40a48f26e70aa301b03ade2e4e58b6aa1c4ef
         with:
           limit-access-to-actor: true
 

@@ -101,7 +101,7 @@ jobs:
         if: ${{ matrix.system == 'x86_64-linux' || matrix.system == 'aarch64-linux' }}
 
       - name: install nix
-        uses: cachix/install-nix-action@v31
+        uses: cachix/install-nix-action@56a7bb7b56d9a92d4fd1bc05758de7eea4a370a8
         with:
           extra_nix_config: |
             sandbox = ${{
@@ -125,7 +125,7 @@ jobs:
           nix profile install ${args[@]}
 
       - name: start checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           repository: ${{ inputs.remote }}
           persist-credentials: false
@@ -155,7 +155,7 @@ jobs:
 
       - name: start upterm session
         if: ${{ inputs.upterm }}
-        uses: owenthereal/action-upterm@v1
+        uses: owenthereal/action-upterm@77f40a48f26e70aa301b03ade2e4e58b6aa1c4ef
         with:
           limit-access-to-actor: true
 
