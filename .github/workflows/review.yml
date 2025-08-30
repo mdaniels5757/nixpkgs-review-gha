@@ -51,11 +51,6 @@ on:
         description: "nixpkgs-review extra args"
         required: false
         type: string
-      upterm:
-        description: "Start upterm session after nixpkgs-review"
-        required: true
-        type: boolean
-        default: false
       post-result:
         description: "Post Result"
         required: true
@@ -157,6 +152,7 @@ jobs:
           name: ${{ vars.CACHIX_CACHE }}
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
           extraPullNames: nix-community
+
       - name: install packages
         run: |
           pkgs=(coreutils nixpkgs-review jq gnused)
@@ -197,12 +193,6 @@ jobs:
           EXTRA_ARGS: ${{ inputs.extra-args }}
           PR_JSON: ${{ needs.prepare.outputs.pr }}
           BUILD_ARGS: ${{ inputs.build-args }}
-
-      - name: start upterm session
-        if: ${{ inputs.upterm }}
-        uses: owenthereal/action-upterm@77f40a48f26e70aa301b03ade2e4e58b6aa1c4ef
-        with:
-          limit-access-to-actor: true
 
       - name: generate report
         id: report
