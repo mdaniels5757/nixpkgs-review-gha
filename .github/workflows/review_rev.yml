@@ -59,11 +59,6 @@ on:
         description: "nixpkgs-review extra args"
         required: false
         type: string
-      upterm:
-        description: "Start upterm session after nixpkgs-review"
-        required: true
-        type: boolean
-        default: false
 
 jobs:
   review:
@@ -157,12 +152,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           EXTRA_ARGS: ${{ inputs.extra-args }}
-
-      - name: start upterm session
-        if: ${{ inputs.upterm }}
-        uses: owenthereal/action-upterm@77f40a48f26e70aa301b03ade2e4e58b6aa1c4ef
-        with:
-          limit-access-to-actor: true
 
       - name: generate report
         id: report

@@ -106,9 +106,3 @@ jobs:
         if: ${{ inputs.packages != '' }}
         env:
           NIXPKGS_REF: ${{ inputs.nixpkgs }}
-
-      - name: start upterm session
-        if: ${{ inputs.upterm }}
-        uses: owenthereal/action-upterm@77f40a48f26e70aa301b03ade2e4e58b6aa1c4ef
-        with:
-          limit-access-to-actor: true

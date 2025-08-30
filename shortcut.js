@@ -17,7 +17,6 @@ const reviewDefaults = ({ title, commits, labels, author, authoredByMe, hasLinux
     "aarch64-darwin": hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
     // "extra-args": "",
     // "push-to-cache": true,
-    // "upterm": false,
     // "post-result": true,
     // "on-success": "nothing",
   };
