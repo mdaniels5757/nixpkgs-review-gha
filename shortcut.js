@@ -9,12 +9,14 @@ const repo = "Defelo/nixpkgs-review-gha";
 const reviewDefaults = ({ title, commits, labels, author, authoredByMe, hasLinuxRebuilds, hasDarwinRebuilds }) => {
   const darwinSandbox = "true";
 
+  const hasRebuilds = hasLinuxRebuilds || hasDarwinRebuilds;
+
   return {
     // "branch": "main",
-    "x86_64-linux": hasLinuxRebuilds,
-    "aarch64-linux": hasLinuxRebuilds,
-    "x86_64-darwin": hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
-    "aarch64-darwin": hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
+    "x86_64-linux": !hasRebuilds || hasLinuxRebuilds,
+    "aarch64-linux": !hasRebuilds || hasLinuxRebuilds,
+    "x86_64-darwin": !hasRebuilds || hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
+    "aarch64-darwin": !hasRebuilds || hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
     // "extra-args": "",
     // "push-to-cache": true,
     // "upterm": false,
