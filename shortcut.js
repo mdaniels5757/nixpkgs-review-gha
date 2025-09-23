@@ -8,13 +8,15 @@ const repo = "Defelo/nixpkgs-review-gha";
 
 const reviewDefaults = ({ title, commits, labels, author, authoredByMe, hasLinuxRebuilds, hasDarwinRebuilds }) => {
   const darwinSandbox = "true";
-  
+
+  const hasRebuilds = hasLinuxRebuilds || hasDarwinRebuilds;
+
   return {
     // "branch": "main",
-    "x86_64-linux": hasLinuxRebuilds,
-    "aarch64-linux": hasLinuxRebuilds,
-    "x86_64-darwin": hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
-    "aarch64-darwin": hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
+    "x86_64-linux": !hasRebuilds || hasLinuxRebuilds,
+    "aarch64-linux": !hasRebuilds || hasLinuxRebuilds,
+    "x86_64-darwin": !hasRebuilds || hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
+    "aarch64-darwin": !hasRebuilds || hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
     // "extra-args": "",
     // "push-to-cache": true,
     // "post-result": true,
@@ -39,15 +41,20 @@ const query = async (doc, sel) => {
 
 const getPrDetails = pr => {
   const title = document.querySelector("bdi.js-issue-title.markdown-title").innerText;
-  const commits = [...document.querySelectorAll(".TimelineItem-body a.markdown-title[href*='/commits/']")]
-    .flatMap(({ title, href }) => {
+  const commits = [...document.querySelectorAll(".TimelineItem-body a.markdown-title[href*='/commits/']")].flatMap(
+    ({ title, href }) => {
       const match = /\/NixOS\/nixpkgs\/pull\/(\d+)\/commits\/([0-9a-f]+)$/i.exec(href);
-      return (match === null || match[1] !== pr) ? [] : [{
-        commit_id: match[2],
-        subject: title.split("\n")[0],
-        description: title,
-      }];
-    });
+      return match === null || match[1] !== pr
+        ? []
+        : [
+            {
+              commit_id: match[2],
+              subject: title.split("\n")[0],
+              description: title,
+            },
+          ];
+    },
+  );
   const labels = [...document.querySelectorAll("div.js-issue-labels > a")].map(x => x.innerText);
   const author = document.querySelector(".js-discussion > :first-child a.author").href.split("/").at(-1);
   const self = document.querySelector("div.AppHeader-user button[data-login]").getAttribute("data-login");
@@ -60,7 +67,9 @@ const getPrDetails = pr => {
 };
 
 const setupActionsPage = async () => {
-  const match = /^https:\/\/github.com\/([^/]+\/[^/]+)\/actions\/workflows\/review.yml#dispatch:(.*)$/.exec(location.href);
+  const match = /^https:\/\/github.com\/([^/]+\/[^/]+)\/actions\/workflows\/review.yml#dispatch:(.*)$/.exec(
+    location.href,
+  );
   if (match === null || match[1] !== repo) return;
 
   const inputs = new URLSearchParams(match[2]);
@@ -98,9 +107,7 @@ const setupActionsPage = async () => {
   const branch = inputs.get("branch");
   if (branch) await setBranch(branch);
 
-  [...inputs]
-    .filter(([name]) => name !== "branch")
-    .forEach(([name, value]) => setInput(name, value));
+  [...inputs].filter(([name]) => name !== "branch").forEach(([name, value]) => setInput(name, value));
 
   document.querySelector("details .workflow-dispatch button[type=submit]").focus();
 };
@@ -108,7 +115,7 @@ const setupActionsPage = async () => {
 const setupPrPage = async () => {
   const match = /^https:\/\/github.com\/NixOS\/nixpkgs\/pull\/(\d+)([?#].*)?$/i.exec(location.href);
   if (match === null) return;
-  
+
   const pr = match[1];
   const actions = await query(document, ".gh-header-show .gh-header-actions");
 
@@ -139,7 +146,7 @@ const setupPrPage = async () => {
       };
     }
   }
-}
+};
 
 new MutationObserver(setupPrPage).observe(document, { subtree: true, childList: true });
 
