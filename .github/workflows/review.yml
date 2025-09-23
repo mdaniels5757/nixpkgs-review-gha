@@ -43,19 +43,21 @@ on:
           - yes_sandbox_false
           - yes_sandbox_relaxed
           - yes_sandbox_true
-      build-args:
-        description: "args to nix-build"
-        required: true
-        default: "-L"
       extra-args:
-        description: "nixpkgs-review extra args"
+        description: "nixpkgs-review extra args (provide build args with e.g. --build-args='-L')"
         required: false
         type: string
+        default: --build-args='-L'
       upterm:
         description: "Start upterm session after nixpkgs-review"
         required: true
         type: boolean
         default: false
+      cache:
+        description: "Use non-default caches?"
+        required: true
+        type: boolean
+        default: true
       post-result:
         description: "Post Result"
         required: true
@@ -153,6 +155,7 @@ jobs:
 
       - name: setup Cachix
         uses: cachix/cachix-action@0fc020193b5a1fa3ac4575aa3a7d3aa6a35435ad
+        if: ${{ inputs.cache }}
         with:
           name: ${{ vars.CACHIX_CACHE }}
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
@@ -180,7 +183,6 @@ jobs:
             --no-shell \
             --no-headers \
             --print-result \
-            --build-args="${BUILD_ARGS}" \
             --pr-json="$PR_JSON" \
             $EXTRA_ARGS
           EOF
@@ -190,7 +192,6 @@ jobs:
             --no-shell \
             --no-headers \
             --print-result \
-            --build-args="${BUILD_ARGS}" \
             --pr-json="$PR_JSON" \
             $EXTRA_ARGS \
             || true
@@ -199,7 +200,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           EXTRA_ARGS: ${{ inputs.extra-args }}
           PR_JSON: ${{ needs.prepare.outputs.pr }}
-          BUILD_ARGS: ${{ inputs.build-args }}
 
       - name: start upterm session
         if: ${{ inputs.upterm }}
