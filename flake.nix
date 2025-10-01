@@ -51,4 +51,6 @@
         '';
       });
     };
+
+  nixConfig.commit-lock-file-summary = "chore: update flake.lock";
 }
