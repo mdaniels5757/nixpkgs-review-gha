@@ -1,6 +1,7 @@
 name: self-update
 
-permissions: {}
+permissions:
+  actions: write
 
 on:
   workflow_dispatch:
@@ -13,12 +14,14 @@ jobs:
     steps:
       - name: ensure token
         run: |
-          if [[ -z "$GH_TOKEN" ]]; then
-            echo "::error::GH_SELF_UPDATE_TOKEN secret is not set. Please either set this secret or disable this workflow."
+          if [[ -z "$GH_SELF_UPDATE_TOKEN" ]]; then
+            echo "::error::GH_SELF_UPDATE_TOKEN secret is not set. Disabling this workflow for now. If you want your fork to update itself automatically, please set this secret and re-enable this workflow."
+            gh -R "$GITHUB_REPOSITORY" workflow disable "$GITHUB_WORKFLOW"
             exit 1
           fi
         env:
-          GH_TOKEN: ${{ secrets.GH_SELF_UPDATE_TOKEN }}
+          GH_SELF_UPDATE_TOKEN: ${{ secrets.GH_SELF_UPDATE_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
 
       - name: get upstream repo
         id: upstream
