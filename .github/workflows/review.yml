@@ -228,7 +228,7 @@ jobs:
       success: ${{ steps.report.outputs.success }}
 
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           merge-multiple: true
 
@@ -287,7 +287,7 @@ jobs:
     if: ${{ inputs.post-result || inputs.on-success != 'nothing' }}
 
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: report.md
 
