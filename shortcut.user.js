@@ -9,7 +9,7 @@ const user = document.querySelector("header.GlobalNav button[data-login]")?.getA
 const repo = user ? `${user}/nixpkgs-review-gha` : null;
 
 const reviewDefaults = ({ title, commits, labels, author, authoredByMe, hasLinuxRebuilds, hasDarwinRebuilds }) => {
-  const darwinSandbox = "relaxed";
+  const darwinSandbox = "true";
 
   const hasRebuilds = hasLinuxRebuilds || hasDarwinRebuilds;
 
