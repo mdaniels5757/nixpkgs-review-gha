@@ -1,5 +1,5 @@
 name: build
-run-name: "build ${{ inputs.packages }}"
+run-name: "build ${{ inputs.packages }} (${{ inputs.nixpkgs }})"
 
 permissions: {}
 
@@ -24,7 +24,7 @@ on:
         description: "Build on x86_64-darwin"
         required: true
         type: choice
-        default: yes_sandbox_relaxed
+        default: "no"
         options:
           - "no"
           - yes_sandbox_false
@@ -34,7 +34,7 @@ on:
         description: "Build on aarch64-darwin"
         required: true
         type: choice
-        default: yes_sandbox_relaxed
+        default: "no"
         options:
           - "no"
           - yes_sandbox_false
@@ -45,6 +45,16 @@ on:
         required: true
         type: boolean
         default: false
+      nixpkgs:
+        description: "Nixpkgs version (e.g. github:NixOS/nixpkgs/nixos-unstable or github:NixOS/nixpkgs/master)"
+        required: true
+        type: string
+        default: github:NixOS/nixpkgs/master
+      cachix:
+        description: "Use non-default caches?"
+        required: true
+        type: boolean
+        default: true
 
 jobs:
   build:
@@ -84,9 +94,22 @@ jobs:
             || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_relaxed') && 'relaxed'
             || 'true' }}
 
+      - name: setup Cachix
+        if: ${{ inputs.cachix }}
+        uses: cachix/cachix-action@v16
+        with:
+          name: ${{ vars.CACHIX_CACHE }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          extraPullNames: nix-community
+
       - name: nix build
-        run: nix build --keep-going -L ${{ inputs.packages }}
+        run: |
+          pkgs=(${{ inputs.packages }})
+          for pkg in ${pkgs[@]}; do args+=("${NIXPKGS_REF}#${pkg}"); done
+          nix build --keep-going -L "${args[@]}"
         if: ${{ inputs.packages != '' }}
+        env:
+          NIXPKGS_REF: ${{ inputs.nixpkgs }}
 
       - name: set GITHUB_TOKEN
         if: ${{ inputs.upterm }}
