@@ -249,7 +249,7 @@ jobs:
         env:
           OS: ${{ runner.os }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: report_${{ matrix.system }}.json
           path: report_${{ matrix.system }}.json
@@ -309,7 +309,7 @@ jobs:
           MERGE: ${{ needs.prepare.outputs.merge }}
           EXTRA_ARGS: ${{ inputs.extra-args && format(' {0}', inputs.extra-args) || '' }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: report.md
           path: report.md
