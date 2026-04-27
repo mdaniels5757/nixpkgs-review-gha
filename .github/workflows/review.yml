@@ -148,6 +148,9 @@ jobs:
             || (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_relaxed'
             || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_relaxed') && 'relaxed'
             || 'true' }}
+          builders: ${{ (vars.USE_BUILDERS == 'yes' || vars.USE_BUILDERS == 'always') && vars.BUILDERS || '' }}
+          ssh-key: ${{ (vars.USE_BUILDERS == 'yes' || vars.USE_BUILDERS == 'always') && secrets.SSH_KEY || '' }}
+          ssh-cert: ${{ (vars.USE_BUILDERS == 'yes' || vars.USE_BUILDERS == 'always') && secrets.SSH_CERT || '' }}
 
       - name: setup Cachix
         uses: cachix/cachix-action@v17
@@ -197,6 +200,7 @@ jobs:
           EXTRA_ARGS: ${{ inputs.extra-args }}
           BUILD_ARGS: ${{ inputs.build-args }}
           PR_JSON: ${{ needs.prepare.outputs.pr }}
+          JOBS_ARG: ${{ vars.USE_BUILDERS == 'always' && '-j0' || '' }}
 
       - name: Report cachix info
         if: ${{ inputs.cache }}
