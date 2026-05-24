@@ -24,7 +24,7 @@ runs:
   using: composite
   steps:
     - name: reclaim space (linux)
-      if: runner.os == 'Linux'
+      if: runner.os == 'Linux' && inputs.system != 'riscv64-linux'
       uses: wimpysworld/nothing-but-nix@main
       with:
         hatchet-protocol: rampage

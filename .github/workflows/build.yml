@@ -40,6 +40,11 @@ on:
           - yes_sandbox_false
           - yes_sandbox_relaxed
           - yes_sandbox_true
+      riscv64-linux:
+        description: "Build on riscv64-linux (RISE runners)"
+        required: true
+        type: boolean
+        default: false
       upterm:
         description: "Start upterm session after nix build"
         required: true
@@ -66,16 +71,19 @@ jobs:
           - aarch64-linux
           - x86_64-darwin
           - aarch64-darwin
+          - riscv64-linux
         exclude:
           - system: ${{ !inputs.x86_64-linux && 'x86_64-linux' || '' }}
           - system: ${{ !inputs.aarch64-linux && 'aarch64-linux' || '' }}
           - system: ${{ inputs.x86_64-darwin == 'no' && 'x86_64-darwin' || '' }}
           - system: ${{ inputs.aarch64-darwin == 'no' && 'aarch64-darwin' || '' }}
+          - system: ${{ !inputs.riscv64-linux && 'riscv64-linux' || '' }}
     runs-on: >-
       ${{ (matrix.system == 'x86_64-linux' && 'ubuntu-latest')
       || (matrix.system == 'aarch64-linux' && 'ubuntu-24.04-arm')
       || (matrix.system == 'x86_64-darwin' && 'macos-latest')
-      || (matrix.system == 'aarch64-darwin' && 'macos-latest') }}
+      || (matrix.system == 'aarch64-darwin' && 'macos-latest')
+      || (matrix.system == 'riscv64-linux' && 'ubuntu-24.04-riscv') }}
 
     steps:
       - uses: actions/checkout@v6

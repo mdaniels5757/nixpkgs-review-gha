@@ -4,6 +4,7 @@ Run [nixpkgs-review](https://github.com/Mic92/nixpkgs-review) in GitHub Actions
 
 ## Features
 - Build on `x86_64-linux`, `aarch64-linux`, `x86_64-darwin` and `aarch64-darwin`
+- Optionally build on `riscv64-linux` via the [RISE RISC-V Runners](https://riseproject.dev/2026/03/24/announcing-the-rise-risc-v-runners-free-native-risc-v-ci-on-github/) (off by default; requires installing the RISE GitHub App on your fork)
 - No local setup
 - Automatically post results on the reviewed pull request
 - Optionally start an [Upterm](https://upterm.dev/) session after nixpkgs-review has finished to allow interactive testing/debugging via SSH
@@ -73,7 +74,7 @@ Set the following [secrets](../../settings/secrets/actions):
     -V +1h \
     $PUBKEY_PATH
   ```
-  
+
   </details>
 
 Set the following [variables](../../settings/variables/actions):

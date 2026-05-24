@@ -22,6 +22,7 @@
         "aarch64-linux"
         "x86_64-darwin"
         "aarch64-darwin"
+        "riscv64-linux"
       ];
     in
 

@@ -43,6 +43,11 @@ on:
           - yes_sandbox_false
           - yes_sandbox_relaxed
           - yes_sandbox_true
+      riscv64-linux:
+        description: "Run on riscv64-linux (RISE runners)"
+        required: true
+        type: boolean
+        default: false
       extra-args:
         description: "nixpkgs-review extra args"
         required: false
@@ -118,16 +123,19 @@ jobs:
           - aarch64-linux
           - x86_64-darwin
           - aarch64-darwin
+          - riscv64-linux
         exclude:
           - system: ${{ !inputs.x86_64-linux && 'x86_64-linux' || '' }}
           - system: ${{ !inputs.aarch64-linux && 'aarch64-linux' || '' }}
           - system: ${{ inputs.x86_64-darwin == 'no' && 'x86_64-darwin' || '' }}
           - system: ${{ inputs.aarch64-darwin == 'no' && 'aarch64-darwin' || '' }}
+          - system: ${{ !inputs.riscv64-linux && 'riscv64-linux' || '' }}
     runs-on: >-
       ${{ (matrix.system == 'x86_64-linux' && 'ubuntu-latest')
       || (matrix.system == 'aarch64-linux' && 'ubuntu-24.04-arm')
       || (matrix.system == 'x86_64-darwin' && 'macos-latest')
-      || (matrix.system == 'aarch64-darwin' && 'macos-latest') }}
+      || (matrix.system == 'aarch64-darwin' && 'macos-latest')
+      || (matrix.system == 'riscv64-linux' && 'ubuntu-24.04-riscv') }}
 
     steps:
       - uses: actions/checkout@v6
@@ -278,7 +286,7 @@ jobs:
       - name: generate report
         id: report
         run: |
-          systems=(x86_64-linux aarch64-linux x86_64-darwin aarch64-darwin)
+          systems=(x86_64-linux aarch64-linux x86_64-darwin aarch64-darwin riscv64-linux)
 
           for system in "${systems[@]}"; do
             [[ -s "report_${system}.json" ]] || continue
