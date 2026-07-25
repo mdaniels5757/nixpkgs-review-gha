@@ -86,7 +86,7 @@ jobs:
       || (matrix.system == 'riscv64-linux' && 'ubuntu-24.04-riscv') }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: .github/actions
 
