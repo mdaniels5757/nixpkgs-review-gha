@@ -49,7 +49,7 @@ export def "gha review-inputs" [] {
     x86_64-linux
     aarch64-linux
     riscv64-linux
-    push-to-cache
+    cache
     upterm
     post-result
   ] { $in == "true" }
