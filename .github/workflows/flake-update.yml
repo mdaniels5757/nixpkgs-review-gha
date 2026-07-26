@@ -44,6 +44,7 @@ jobs:
       - name: clone repository
         uses: actions/checkout@v6
         with:
+          persist-credentials: false
           ssh-key: ${{ secrets.FLAKE_UPDATE_SSH_KEY }}
 
       - run: nix flake update --commit-lock-file
