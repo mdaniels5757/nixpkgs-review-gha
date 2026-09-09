@@ -26,7 +26,10 @@ gha group "install packages" {
 
 gha group $"run nixpkgs-review ($inputs.extra-args-raw) ($buildArgs)" {
   cd nixpkgs
-  nixpkgs-review -- pr $inputs.pr ...[
+  let command = [
+    nixpkgs-review
+    pr
+    $inputs.pr
     --no-shell
     --no-exit-status
     --no-headers
@@ -35,6 +38,8 @@ gha group $"run nixpkgs-review ($inputs.extra-args-raw) ($buildArgs)" {
     --pr-json=($env.PR_JSON)
     ...$inputs.extra-args
   ]
+  $command | print
+  $command
 }
 
 let reviewDir = $"~/.cache/nixpkgs-review/pr-($inputs.pr)" | path expand

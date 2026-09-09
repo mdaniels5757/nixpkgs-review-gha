@@ -61,7 +61,7 @@ on:
       build-args:
         required: false
         type: string
-        default: "-L"
+        default: ""
       cache:
         description: "Use non-default caches?"
         required: true
