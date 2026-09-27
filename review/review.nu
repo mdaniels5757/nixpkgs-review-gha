@@ -39,7 +39,7 @@ gha group $"run nixpkgs-review ($inputs.extra-args-raw) ($buildArgs)" {
     ...$inputs.extra-args
   ]
   $command | print
-  $command
+  run-external ...$command
 }
 
 let reviewDir = $"~/.cache/nixpkgs-review/pr-($inputs.pr)" | path expand
