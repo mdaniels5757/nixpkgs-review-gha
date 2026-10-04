@@ -96,7 +96,7 @@ jobs:
       || (matrix.system == 'riscv64-linux' && 'ubuntu-24.04-riscv') }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           sparse-checkout-cone-mode: false
           sparse-checkout: |
@@ -140,6 +140,6 @@ jobs:
 
       - name: start upterm session
         if: ${{ inputs.upterm }}
-        uses: owenthereal/action-upterm@v1
+        uses: owenthereal/action-upterm@42902ffb5244d6d63501c1daf4f4ec82884025f6 # v1.16.0
         with:
           limit-access-to-actor: true
