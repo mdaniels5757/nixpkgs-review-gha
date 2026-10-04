@@ -1,8 +1,8 @@
 use gha.nu *
 
 let inputs = gha review-inputs
-let pushToAttic = $inputs.push-to-cache and $env.ATTIC_SERVER != '' and $env.ATTIC_CACHE != ''
-let pushToCachix = $inputs.push-to-cache and $env.CACHIX_CACHE != ''
+let pushToAttic = $inputs.cache and $env.ATTIC_SERVER != '' and $env.ATTIC_CACHE != ''
+let pushToCachix = false # handled in workflow
 let pr = $env.PR_JSON | from json
 let head = $pr.head.sha
 let base = $pr.base.sha
