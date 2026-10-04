@@ -87,8 +87,8 @@ on:
         description: "nixpkgs-review extra --build-args"
         required: false
         type: string
-      push-to-cache:
-        description: "Push to cache"
+      cache:
+        description: "Use non-default caches?"
         required: true
         type: boolean
         default: true
@@ -101,7 +101,7 @@ on:
         description: "Post Result"
         required: true
         type: boolean
-        default: true
+        default: false
       on-success:
         description: "What to do on review success"
         required: true
@@ -120,7 +120,7 @@ jobs:
       pr: ${{ steps.prepare.outputs.pr }}
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           sparse-checkout-cone-mode: false
@@ -162,7 +162,7 @@ jobs:
       || (matrix.system == 'riscv64-linux' && 'ubuntu-24.04-riscv') }}
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           sparse-checkout-cone-mode: false
@@ -192,11 +192,19 @@ jobs:
           ssh-cert: ${{ inputs.builders != 'gha' && secrets.SSH_CERT || '' }}
 
       - name: clone nixpkgs
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           repository: NixOS/nixpkgs
           path: nixpkgs
           persist-credentials: false
+
+      - name: setup Cachix
+        uses: cachix/cachix-action@v17
+        if: ${{ inputs.cache }}
+        with:
+          name: ${{ vars.CACHIX_CACHE }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          extraPullNames: nix-community
 
       - run: nu review/review.nu
         env:
@@ -212,7 +220,7 @@ jobs:
           IDENTIFY_STILL_FAILING_PACKAGES: ${{ vars.IDENTIFY_STILL_FAILING_PACKAGES }}
           IDENTIFY_UNSUPPORTED_PACKAGES: ${{ vars.IDENTIFY_UNSUPPORTED_PACKAGES }}
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: report_${{ matrix.system }}.json
           path: report_${{ matrix.system }}.json
@@ -221,7 +229,7 @@ jobs:
 
       - name: start upterm session
         if: ${{ inputs.upterm }}
-        uses: owenthereal/action-upterm@95a37de421619d5caf052b4c796c894b1f663afb # v2.8.0
+        uses: owenthereal/action-upterm@v2.8.0
         with:
           limit-access-to-actor: true
 
@@ -232,7 +240,7 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           sparse-checkout-cone-mode: false
@@ -242,7 +250,7 @@ jobs:
       - name: setup nu
         uses: $/.github/actions/setup-nu
 
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      - uses: actions/download-artifact@v8.0.2
         with:
           merge-multiple: true
 
@@ -257,14 +265,14 @@ jobs:
           SHA: ${{ github.workflow_sha }}
           API_URL: ${{ vars.API_URL }}
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: reports.json
           path: reports.json
           if-no-files-found: error
           archive: false
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: report.md
           path: report.md

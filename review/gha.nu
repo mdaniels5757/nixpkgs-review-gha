@@ -53,7 +53,7 @@ export def "gha review-inputs" [] {
     allow-unfree
     allow-insecure
     tests
-    push-to-cache
+    cache
     upterm
     post-result
   ] { $in == "true" }

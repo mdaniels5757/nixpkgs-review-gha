@@ -70,6 +70,11 @@ on:
         required: true
         type: boolean
         default: false
+      cachix:
+        description: "Use non-default caches?"
+        required: true
+        type: boolean
+        default: true
 
 jobs:
   build:
@@ -114,6 +119,14 @@ jobs:
           ssh-key: ${{ inputs.builders != 'gha' && secrets.SSH_KEY || '' }}
           ssh-cert: ${{ inputs.builders != 'gha' && secrets.SSH_CERT || '' }}
 
+      - name: setup Cachix
+        if: ${{ inputs.cachix }}
+        uses: cachix/cachix-action@v17
+        with:
+          name: ${{ vars.CACHIX_CACHE }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          extraPullNames: nix-community
+
       - name: set environment variables
         run: |
           if [[ ${{ inputs.allow-unfree }} = true ]]; then echo "NIXPKGS_ALLOW_UNFREE=1" >> "$GITHUB_ENV"; fi
@@ -134,6 +147,6 @@ jobs:
 
       - name: start upterm session
         if: ${{ inputs.upterm }}
-        uses: owenthereal/action-upterm@95a37de421619d5caf052b4c796c894b1f663afb # v2.8.0
+        uses: owenthereal/action-upterm@v2.8.0
         with:
           limit-access-to-actor: true
