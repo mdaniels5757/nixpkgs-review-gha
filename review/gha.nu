@@ -52,7 +52,7 @@ export def "gha review-inputs" [] {
     riscv64-linux
     allow-unfree
     allow-insecure
-    push-to-cache
+    cache
     upterm
     post-result
   ] { $in == "true" }

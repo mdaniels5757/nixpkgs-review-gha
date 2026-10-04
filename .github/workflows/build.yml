@@ -70,6 +70,11 @@ on:
         required: true
         type: boolean
         default: false
+      cachix:
+        description: "Use non-default caches?"
+        required: true
+        type: boolean
+        default: true
 
 jobs:
   build:
@@ -98,6 +103,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /.github/actions
@@ -119,6 +125,14 @@ jobs:
           builders: ${{ inputs.builders != 'gha' && vars.BUILDERS || '' }}
           ssh-key: ${{ inputs.builders != 'gha' && secrets.SSH_KEY || '' }}
           ssh-cert: ${{ inputs.builders != 'gha' && secrets.SSH_CERT || '' }}
+
+      - name: setup Cachix
+        if: ${{ inputs.cachix }}
+        uses: cachix/cachix-action@v17
+        with:
+          name: ${{ vars.CACHIX_CACHE }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          extraPullNames: nix-community
 
       - name: set environment variables
         run: |

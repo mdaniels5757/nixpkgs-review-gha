@@ -83,8 +83,8 @@ on:
         description: "nixpkgs-review extra --build-args"
         required: false
         type: string
-      push-to-cache:
-        description: "Push to cache"
+      cache:
+        description: "Use non-default caches?"
         required: true
         type: boolean
         default: true
@@ -97,7 +97,7 @@ on:
         description: "Post Result"
         required: true
         type: boolean
-        default: true
+        default: false
       on-success:
         description: "What to do on review success"
         required: true
@@ -118,6 +118,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /.github/actions
@@ -160,6 +161,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /.github/actions
@@ -193,6 +195,14 @@ jobs:
           repository: NixOS/nixpkgs
           path: nixpkgs
           persist-credentials: false
+
+      - name: setup Cachix
+        uses: cachix/cachix-action@v17
+        if: ${{ inputs.cache }}
+        with:
+          name: ${{ vars.CACHIX_CACHE }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          extraPullNames: nix-community
 
       - run: nu review/review.nu
         env:
@@ -230,6 +240,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /.github/actions
