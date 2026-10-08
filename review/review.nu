@@ -54,7 +54,7 @@ if $pushToAttic or $pushToCachix {
         return
       }
       $paths | str join "\n" | attic push --stdin $env.ATTIC_CACHE
-      http get -H { Authorization: $"Bearer ($env.ATTIC_TOKEN)" } $"($env.ATTIC_SERVER)_api/v1/cache-config/nixpkgs"
+      http get -H { Authorization: $"Bearer ($env.ATTIC_TOKEN)" } $"($env.ATTIC_SERVER)_api/v1/cache-config/($env.ATTIC_CACHE)"
       | select substituter_endpoint public_key is_public
     } else if $pushToCachix {
       with-env { CACHIX_SIGNING_KEY: ($env.CACHIX_SIGNING_KEY | default -e null) } {
