@@ -46,6 +46,16 @@ on:
         required: true
         type: boolean
         default: false
+      allow-unfree:
+        description: "Allow unfree packages"
+        required: true
+        type: boolean
+        default: true
+      allow-insecure:
+        description: "Allow insecure packages"
+        required: true
+        type: boolean
+        default: true
       builders:
         description: "Nix builders to use"
         required: true
@@ -110,8 +120,16 @@ jobs:
           ssh-key: ${{ inputs.builders != 'gha' && secrets.SSH_KEY || '' }}
           ssh-cert: ${{ inputs.builders != 'gha' && secrets.SSH_CERT || '' }}
 
+      - name: set environment variables
+        run: |
+          if [[ ${{ inputs.allow-unfree }} = true ]]; then echo "NIXPKGS_ALLOW_UNFREE=1" >> "$GITHUB_ENV"; fi
+          if [[ ${{ inputs.allow-insecure }} = true ]]; then echo "NIXPKGS_ALLOW_INSECURE=1" >> "$GITHUB_ENV"; fi
+
       - name: nix build
-        run: nix build --keep-going -L ${{ inputs.packages }}
+        run: >-
+          nix build --keep-going -L ${{
+            (inputs.allow-unfree || inputs.allow-insecure) && '--impure' || ''
+          }} ${{ inputs.packages }}
         if: ${{ inputs.packages != '' }}
 
       - name: set GITHUB_TOKEN
