@@ -56,6 +56,16 @@ on:
         required: true
         type: boolean
         default: false
+      allow-unfree:
+        description: "Allow unfree packages"
+        required: true
+        type: boolean
+        default: true
+      allow-insecure:
+        description: "Allow insecure packages"
+        required: true
+        type: boolean
+        default: true
       builders:
         description: "Nix builders to use"
         required: true

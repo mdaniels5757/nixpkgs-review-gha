@@ -11,6 +11,9 @@ let jobsArg = if $inputs.builders == "remote" { "-j0" } else { "" }
 let system = nix config show system
 let buildArgs = --build-args=($"-L ($jobsArg) ($inputs.extra-build-args)")
 
+if $inputs.allow-unfree { $env.NIXPKGS_ALLOW_UNFREE = 1 }
+if $inputs.allow-insecure { $env.NIXPKGS_ALLOW_INSECURE = 1 }
+
 gha group "install packages" {
   let system = match $system {
     "x86_64-darwin" => "aarch64-darwin"
