@@ -121,7 +121,7 @@ jobs:
 
       - name: setup Cachix
         if: ${{ inputs.cachix }}
-        uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        uses: cachix/cachix-action@v17
         with:
           name: ${{ vars.CACHIX_CACHE }}
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
@@ -147,6 +147,6 @@ jobs:
 
       - name: start upterm session
         if: ${{ inputs.upterm }}
-        uses: owenthereal/action-upterm@b9dfa526f890bbd5162d781f8d9c69b97731d73d # v2.7.0
+        uses: owenthereal/action-upterm@v2.7.0
         with:
           limit-access-to-actor: true
